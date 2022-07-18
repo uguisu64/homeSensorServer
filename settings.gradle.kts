@@ -1,0 +1,1 @@
+rootProject.name = "com.example.home_sensor_server"
