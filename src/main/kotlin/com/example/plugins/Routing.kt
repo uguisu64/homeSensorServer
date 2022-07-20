@@ -1,5 +1,6 @@
 package com.example.plugins
 
+import com.example.dataclass.SettingData
 import com.example.dataclass.ThermoHygroData
 import com.example.dataclass.ThermoHygroInfluxData
 import com.influxdb.client.domain.WritePrecision
@@ -14,11 +15,11 @@ import io.ktor.server.request.*
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
 
-fun Application.configureRouting() {
-    val org    = "soma_home"
-    val bucket = "room_sensors"
-    val url    = "http://192.168.50.222:8086"
-    val token  = "FLpXWJlSFSO3zWMPKqXiDs9XapoSDJe50KjBmAlh5QAJNX7OXudqeILAiCRaYAiHAtcRdxS782YvNqI1h8Rf6g=="
+fun Application.configureRouting(settingData: SettingData) {
+    val org    = settingData.org
+    val bucket = settingData.bucket
+    val url    = settingData.url
+    val token  = settingData.token
 
     install(ContentNegotiation) {
         json()
@@ -27,17 +28,21 @@ fun Application.configureRouting() {
     routing {
         post("/house/sensor/thermohygro") {
             try {
+                //Jsonデータを受け取りデータクラスに格納
                 val thermoHygroData = call.receive<ThermoHygroData>()
+                //現在時刻の情報を付加したデータクラスの作成
                 val thermoHygroInfluxData = ThermoHygroInfluxData(
-                    tagKey = thermoHygroData.name,
-                    temp = thermoHygroData.temp,
+                    tagKey   = thermoHygroData.name,
+                    temp     = thermoHygroData.temp,
                     humidity = thermoHygroData.humidity,
-                    time = Instant.now()
+                    time     = Instant.now()
                 )
 
-                val client = InfluxDBClientKotlinFactory.create(url,token.toCharArray(),org,bucket)
+                //InfluxDBに接続
+                val client   = InfluxDBClientKotlinFactory.create(url,token.toCharArray(),org,bucket)
                 val writeApi = client.getWriteKotlinApi()
 
+                //データの書き込み
                 runBlocking {
                     writeApi.writeMeasurement(thermoHygroInfluxData, WritePrecision.NS)
                 }

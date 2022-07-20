@@ -1,0 +1,6 @@
+{
+  "org": "yourOrganization",
+  "bucket": "yourBucket",
+  "url": "InfluxURL",
+  "token": "yourToken"
+}
